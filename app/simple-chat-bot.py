@@ -72,20 +72,34 @@ if prompt := st.chat_input("What's up?"):
         st.markdown(prompt)
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
-        response = cohere.chat(
-            input=prompt,
-            streaming=streaming,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            k=k,
-            p=p,
-            frequency_penalty=frequency_penalty,
-            presence_penalty=presence_penalty
-        )
+        if "messages" not in st.session_state:
+            response = cohere.chat(
+                input=prompt,
+                streaming=streaming,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                k=k,
+                p=p,
+                frequency_penalty=frequency_penalty,
+                presence_penalty=presence_penalty
+            )
+        else:
+            messages = st.session_state.messages
+            response = cohere.chat(
+                input=messages,
+                streaming=streaming,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                k=k,
+                p=p,
+                frequency_penalty=frequency_penalty,
+                presence_penalty=presence_penalty
+            )
         message = ""
         for content in response:
             message += content
             message_placeholder.markdown(message)
+        st.session_state.messages.append({"role": "assistant", "content": message})
 
 if session_id:
     trace_id = langfuse_handler.get_trace_id()
