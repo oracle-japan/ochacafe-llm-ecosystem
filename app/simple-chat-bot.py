@@ -51,7 +51,7 @@ with st.sidebar.container():
             "thumbs" if st.sidebar.toggle(label="`Faces` ⇄ `Thumbs`", value=False) else "faces"
         )
         st.sidebar.markdown("## LLM Options")
-        streaming = st.sidebar.radio(label="Streaming", options=[True, False], disabled=True)
+        streaming = st.sidebar.radio(label="Streaming", options=[True, False], disabled=True, horizontal=True)
         max_tokens = st.sidebar.number_input(label="Max Tokens", min_value=10, max_value=1024, value=500, step=1)
         temperature = st.sidebar.slider(label="Temperature", min_value=0.0, max_value=1.0, value=0.3, step=0.1)
         k = st.sidebar.slider(label="Top k", min_value=0, max_value=500, value=0, step=1)
