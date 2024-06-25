@@ -36,8 +36,6 @@ if "langfuse_handler" not in st.session_state:
     )
 langfuse_handler = st.session_state["langfuse_handler"]
 
-cohere = Cohere(cohere_api_key=cohere_api_key, callback_handler=langfuse_handler)
-
 st.title("🍔 OCHat w/ Command R+")
 st.caption("""
     Cohere Command R+ を用いたチャットボットです。  
@@ -66,6 +64,18 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+cohere = Cohere(
+    cohere_api_key=cohere_api_key,
+    callback_handler=langfuse_handler,
+    streaming=streaming,
+    max_tokens=max_tokens,
+    temperature=temperature,
+    k=k,
+    p=p,
+    frequency_penalty=frequency_penalty,
+    presence_penalty=presence_penalty
+)
+
 if prompt := st.chat_input("What's up?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -76,24 +86,12 @@ if prompt := st.chat_input("What's up?"):
             response = cohere.chat(
                 input=prompt,
                 streaming=streaming,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                k=k,
-                p=p,
-                frequency_penalty=frequency_penalty,
-                presence_penalty=presence_penalty
             )
         else:
             messages = st.session_state.messages
             response = cohere.chat(
                 input=messages,
                 streaming=streaming,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                k=k,
-                p=p,
-                frequency_penalty=frequency_penalty,
-                presence_penalty=presence_penalty
             )
         message = ""
         for content in response:
