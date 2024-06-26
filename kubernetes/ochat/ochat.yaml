@@ -1,0 +1,93 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ochat
+  namespace: ochacafe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ochat
+  template:
+    metadata:
+      labels:
+        app: ochat
+    spec:
+      containers:
+        - name: ochat
+          image: nrt.ocir.io/orasejapan/shukawam/ochat:0.0.2
+          ports:
+            - name: api
+              containerPort: 8501
+          env:
+            - name: COHERE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ochat-secret
+                  key: COHERE_API_KEY
+            - name: LANGFUSE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ochat-secret
+                  key: LANGFUSE_SECRET_KEY
+            - name: LANGFUSE_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ochat-secret
+                  key: LANGFUSE_PUBLIC_KEY
+            - name: LANGFUSE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: ochat-secret
+                  key: LANGFUSE_HOST
+            - name: MILVUS_URI
+              valueFrom:
+                secretKeyRef:
+                  name: ochat-secret
+                  key: MILVUS_URI
+            - name: COLLECTION_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: ochat-secret
+                  key: COLLECTION_NAME
+      imagePullSecrets:
+        - name: ocir-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ochat-service
+  namespace: milvus
+spec:
+  selector:
+    app: ochat
+  ports:
+    - protocol: TCP
+      port: 8501
+      targetPort: 8501
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ochat
+  namespace: ochacafe
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - ochat.shukawam.me
+      secretName: shukawam-tls-secret-ochat
+  rules:
+    - host: ochat.shukawam.me
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: ochat-service
+                port:
+                  number: 8501
