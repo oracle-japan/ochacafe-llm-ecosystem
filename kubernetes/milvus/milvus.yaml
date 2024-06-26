@@ -1,0 +1,160 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: etcd
+  namespace: milvus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: etcd
+  template:
+    metadata:
+      labels:
+        app: etcd
+    spec:
+      containers:
+        - name: etcd
+          image: quay.io/coreos/etcd:v3.5.5
+          env:
+            - name: ETCD_AUTO_COMPACTION_MODE
+              value: "revision"
+            - name: ETCD_AUTO_COMPACTION_RETENTION
+              value: "1000"
+            - name: ETCD_QUOTA_BACKEND_BYTES
+              value: "4294967296"
+            - name: ETCD_SNAPSHOT_COUNT
+              value: "50000"
+          volumeMounts:
+            - mountPath: /etcd
+              name: etcd-storage
+          command:
+            [
+              "etcd",
+              "-advertise-client-urls=http://127.0.0.1:2379",
+              "-listen-client-urls",
+              "http://0.0.0.0:2379",
+              "--data-dir",
+              "/etcd",
+            ]
+      volumes:
+        - name: etcd-storage
+          persistentVolumeClaim:
+            claimName: etcd-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: etcd-service
+  namespace: milvus
+spec:
+  selector:
+    app: etcd
+  ports:
+    - protocol: TCP
+      port: 2379
+      targetPort: 2379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: milvus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+          env:
+            - name: MINIO_ACCESS_KEY
+              value: "minioadmin"
+            - name: MINIO_SECRET_KEY
+              value: "minioadmin"
+          ports:
+            - containerPort: 9000
+            - containerPort: 9001
+          volumeMounts:
+            - mountPath: /minio_data
+              name: minio-storage
+          command:
+            ["minio", "server", "/minio_data", "--console-address", ":9001"]
+      volumes:
+        - name: minio-storage
+          persistentVolumeClaim:
+            claimName: minio-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-service
+  namespace: milvus
+spec:
+  selector:
+    app: minio
+  ports:
+    - name: minio-http
+      port: 9000
+      targetPort: 9000
+    - name: minio-admin
+      port: 9001
+      targetPort: 9001
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: standalone
+  namespace: milvus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: standalone
+  template:
+    metadata:
+      labels:
+        app: standalone
+    spec:
+      containers:
+        - name: standalone
+          image: milvusdb/milvus:v2.4.5
+          env:
+            - name: ETCD_ENDPOINTS
+              value: "etcd-service:2379"
+            - name: MINIO_ADDRESS
+              value: "minio-service:9000"
+          ports:
+            - containerPort: 19530
+            - containerPort: 9091
+          volumeMounts:
+            - mountPath: /var/lib/milvus
+              name: standalone-storage
+          command: ["milvus", "run", "standalone"]
+      volumes:
+        - name: standalone-storage
+          persistentVolumeClaim:
+            claimName: standalone-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: standalone-service
+  namespace: milvus
+spec:
+  selector:
+    app: standalone
+  ports:
+    - name: standalone-http
+      port: 19530
+      targetPort: 19530
+    - name: standalone-admin
+      port: 9091
+      targetPort: 9091
