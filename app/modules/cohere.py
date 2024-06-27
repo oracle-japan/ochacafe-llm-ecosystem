@@ -27,7 +27,6 @@ class Cohere:
                     "lambda_mult": kwargs.get("lambda_mult")
                 }
             )
-        
 
     def chat(self, input: str, streaming: bool):
         if streaming == True:
@@ -36,6 +35,8 @@ class Cohere:
                 config={"callbacks": [self.callback_handler], "configurable": {"session_id": st.session_state["session_id"]}},
             )
             for chunk in response:
+                if "generation_id" in chunk.response_metadata:
+                    break
                 yield chunk.content
         else:
             response = self.cohere_chat_model.invoke(
@@ -62,6 +63,8 @@ class Cohere:
                 config={"callbacks": [self.callback_handler], "configurable": {"session_id": st.session_state["session_id"]}},
             )
             for chunk in response:
+                if len(chunk) > 20:
+                    break
                 yield chunk
         else:
             response = chain.invoke(
@@ -78,7 +81,18 @@ class Cohere:
             k=kwargs.get("k"),
             p=kwargs.get("p"),
             frequency_penalty=kwargs.get("frequency_penalty"),
-            presence_penalty=kwargs.get("presence_penalty")
+            presence_penalty=kwargs.get("presence_penalty"),
+            metadata={
+                "model_parameters": {
+                    "streaming": kwargs.get("streaming"),
+                    "max_tokens": kwargs.get("max_tokens"),
+                    "temperature": kwargs.get("temperature"),
+                    "k": kwargs.get("k"),
+                    "p": kwargs.get("p"),
+                    "frequency_penalty": kwargs.get("frequency_penalty"),
+                    "presence_penalty": kwargs.get("presence_penalty"),
+                }
+            }
         )
 
     def _initialize_embed_cohere(self, cohere_api_key, model_name: str) -> CohereEmbeddings:
