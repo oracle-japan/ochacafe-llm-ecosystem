@@ -3,7 +3,7 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_cohere.chat_models import ChatCohere
 from langchain_cohere.embeddings import CohereEmbeddings
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 from langchain_milvus import Milvus
 
 class Cohere:
