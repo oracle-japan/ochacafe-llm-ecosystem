@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 import uuid
 
-from modules.cohere import Cohere
+from modules.oci_generative_ai import OciGenerativeAi
 
 import streamlit as st
 from streamlit_feedback import streamlit_feedback
@@ -10,7 +10,8 @@ from langfuse import Langfuse
 from langfuse.callback import CallbackHandler
 
 _ = load_dotenv()
-cohere_api_key = os.getenv("COHERE_API_KEY")
+compartment_id = os.getenv("COMPARTMENT_ID")
+service_endpoint = os.getenv("GENAI_ENDPOINT")
 secret_key = os.getenv("LANGFUSE_SECRET_KEY")
 public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
 langfuse_host = os.getenv("LANGFUSE_HOST")
@@ -64,16 +65,17 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-cohere = Cohere(
-    cohere_api_key=cohere_api_key,
-    callback_handler=langfuse_handler,
+cohere = OciGenerativeAi(
+    compartment_id=compartment_id,
+    service_endpoint=service_endpoint,
     streaming=streaming,
     max_tokens=max_tokens,
     temperature=temperature,
     k=k,
     p=p,
     frequency_penalty=frequency_penalty,
-    presence_penalty=presence_penalty
+    presence_penalty=presence_penalty,
+    callback_handler=langfuse_handler,
 )
 
 if prompt := st.chat_input("What's up?"):
