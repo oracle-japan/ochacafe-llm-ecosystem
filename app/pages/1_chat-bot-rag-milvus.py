@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 import uuid
 
-from modules.cohere import Cohere
+from modules.oci_generative_ai import OciGenerativeAi
 
 import streamlit as st
 from streamlit_feedback import streamlit_feedback
@@ -10,7 +10,8 @@ from langfuse import Langfuse
 from langfuse.callback import CallbackHandler
 
 _ = load_dotenv()
-cohere_api_key = os.getenv("COHERE_API_KEY")
+compartment_id = os.getenv("COMPARTMENT_ID")
+service_endpoint = os.getenv("GENAI_ENDPOINT")
 secret_key = os.getenv("LANGFUSE_SECRET_KEY")
 public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
 langfuse_host = os.getenv("LANGFUSE_HOST")
@@ -73,11 +74,9 @@ with st.sidebar.container():
         frequency_penalty = st.sidebar.slider(label="Frequency Penalty", min_value=0.0, max_value=1.0, value=0.0, step=0.1)
         presence_penalty = st.sidebar.slider(label="Presence Penalty", min_value=0.0, max_value=1.0, value=0.0, step=0.1)
 
-cohere = Cohere(
-    cohere_api_key=cohere_api_key,
-    callback_handler=langfuse_handler,
-    milvus_uri=milvus_uri,
-    collection_name=collection_name,
+cohere = OciGenerativeAi(
+    compartment_id=compartment_id,
+    service_endpoint=service_endpoint,
     streaming=streaming,
     max_tokens=max_tokens,
     temperature=temperature,
@@ -88,7 +87,10 @@ cohere = Cohere(
     search_type=search_type,
     return_k=return_k,
     score_threshold=score_threshold,
-    lambda_mult=lambda_mult
+    lambda_mult=lambda_mult,
+    milvus_uri=milvus_uri,
+    collection_name=collection_name,
+    callback_handler=langfuse_handler,
 )
 
 if prompt := st.chat_input("What's up?"):
