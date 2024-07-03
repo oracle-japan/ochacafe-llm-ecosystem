@@ -60,19 +60,30 @@ class OciGenerativeAi:
             self.retriever = self.oraclevs.as_retriever()
 
     def chat(self, input: str, streaming: bool):
+        langfuse = st.session_state["langfuse"]
+        prompt_template = PromptTemplate.from_template(
+            langfuse.get_prompt(name="demo-user-prompt-without-rag", type="text").prompt,
+            template_format="jinja2"
+        )
+        chain = (
+            {"question": RunnablePassthrough()}
+            | prompt_template
+            | self.chat_model
+            | StrOutputParser()
+        )
         if streaming == True:
-            response = self.chat_model.stream(
+            response = chain.stream(
                 input,
                 config={"callbacks": [self.callback_handler], "configurable": {"session_id": st.session_state["session_id"]}},
             )
             for chunk in response:
-                yield chunk.content
+                yield chunk
         else:
-            response = self.chat_model.invoke(
+            response = chain.invoke(
                 input,
                 config={"callbacks": [self.callback_handler], "configurable": {"session_id": st.session_state["session_id"]}},
             )
-            return response.content
+            return response
 
     def chat_with_rag(self, input: str, streaming: bool):
         langfuse = st.session_state["langfuse"]
