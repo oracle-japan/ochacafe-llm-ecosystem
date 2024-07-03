@@ -5,6 +5,10 @@ from langchain_core.prompts import PromptTemplate
 from langchain_milvus import Milvus
 from langchain_community.chat_models.oci_generative_ai import ChatOCIGenAI
 from langchain_community.embeddings.oci_generative_ai import OCIGenAIEmbeddings
+from langchain_community.vectorstores.oraclevs import OracleVS
+from langchain_community.vectorstores.utils import DistanceStrategy
+import oracledb
+from oracledb import Connection
 
 class OciGenerativeAi:
     def __init__(self, compartment_id: str, service_endpoint: str, **kwargs):
@@ -37,6 +41,23 @@ class OciGenerativeAi:
                     "lambda_mult": kwargs.get("lambda_mult")
                 }
             )
+        if ("oracle_username" in kwargs) & ("oracle_password" in kwargs) & ("oracle_dsn" in kwargs):
+            connection = oracledb.connect(
+                user=kwargs.get("oracle_username"),
+                password=kwargs.get("oracle_password"),
+                dsn=kwargs.get("oracle_dsn"),
+                config_dir=kwargs.get("oracle_config_dir"),
+                wallet_location=kwargs.get("oracle_wallet_dir"),
+                wallet_password=kwargs.get("oracle_wallet_password"),
+            )
+            self.oraclevs = OracleVS(
+                client=connection,
+                embedding_function=self.embeddings_model,
+                table_name=kwargs.get("table_name"),
+                distance_strategy=DistanceStrategy.COSINE,
+                query="What is a Oracle database",
+            )
+            self.retriever = self.oraclevs.as_retriever()
 
     def chat(self, input: str, streaming: bool):
         if streaming == True:
@@ -115,3 +136,18 @@ class OciGenerativeAi:
             service_endpoint=self.service_endpoint,
             model_id="cohere.embed-multilingual-v3.0"
         )
+
+    def _initialize_oraclevs_connection(self) -> Connection:
+        """Initialize Oracle Database Connection"""
+        print(self.username)
+        print(self.password)
+        print(self.dsn)
+        connection = oracledb.connect(
+            user=self.username,
+            password=self.password,
+            dsn=self.dsn,
+            config_dir=self.config_dir,
+            wallet_location=self.wallet_location,
+            wallet_password=self.wallet_password,
+        )
+        return connection
