@@ -11,7 +11,13 @@ import oracledb
 from oracledb import Connection
 
 class OciGenerativeAi:
-    def __init__(self, compartment_id: str, service_endpoint: str, **kwargs):
+    def __init__(
+        self,
+        compartment_id: str,
+        service_endpoint: str,
+        **kwargs
+    ) -> None:
+        """Initialize OciGenerativeAi"""
         self.compartment_id = compartment_id
         self.service_endpoint = service_endpoint
         self.chat_model = self._initialize_chat_model(
@@ -59,10 +65,15 @@ class OciGenerativeAi:
             )
             self.retriever = self.oraclevs.as_retriever()
 
-    def chat(self, input: str, streaming: bool):
+    def chat(
+        self,
+        input: str,
+        streaming: bool
+    ):
+        """Chat feature without RAG(Retrieval-Augmented Generation)"""
         langfuse = st.session_state["langfuse"]
         prompt_template = PromptTemplate.from_template(
-            langfuse.get_prompt(name="demo-user-prompt-without-rag", type="text").prompt,
+            langfuse.get_prompt(name="ochat-user-prompt-without-rag", type="text").prompt,
             template_format="jinja2"
         )
         chain = (
@@ -85,10 +96,15 @@ class OciGenerativeAi:
             )
             return response
 
-    def chat_with_rag(self, input: str, streaming: bool):
+    def chat_with_rag(
+        self,
+        input: str,
+        streaming: bool
+    ):
+        """Chat feature with RAG(Retrieval-Augmented Generation)"""
         langfuse = st.session_state["langfuse"]
         prompt_template = PromptTemplate.from_template(
-            langfuse.get_prompt(name="demo-user-prompt", type="text").prompt,
+            langfuse.get_prompt(name="ochat-user-prompt", type="text").prompt,
             template_format="jinja2"
         )
         chain = (
@@ -111,7 +127,17 @@ class OciGenerativeAi:
             )
             return response
 
-    def _initialize_chat_model(self, is_stream: bool, max_tokens: int, temperature: float, top_k: int, top_p: float, frequency_penalty: float, presence_penalty: float) -> ChatOCIGenAI:
+    def _initialize_chat_model(
+        self,
+        is_stream: bool,
+        max_tokens: int,
+        temperature: float,
+        top_k: int,
+        top_p: float,
+        frequency_penalty: float,
+        presence_penalty: float
+    ) -> ChatOCIGenAI:
+        """Initialize chat model"""
         return ChatOCIGenAI(
             auth_type="INSTANCE_PRINCIPAL",
             model_id="cohere.command-r-plus",
@@ -141,6 +167,7 @@ class OciGenerativeAi:
         )
 
     def _initialize_embedding_model(self) -> OCIGenAIEmbeddings:
+        """Initialize embedding model"""
         return OCIGenAIEmbeddings(
             auth_type="INSTANCE_PRINCIPAL",
             compartment_id=self.compartment_id,
