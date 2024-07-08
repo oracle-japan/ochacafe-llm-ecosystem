@@ -2,12 +2,12 @@ import os
 from dotenv import load_dotenv
 import uuid
 
-from modules.oci_generative_ai import OciGenerativeAi
-
 import streamlit as st
-from streamlit_feedback import streamlit_feedback
 from langfuse import Langfuse
 from langfuse.callback import CallbackHandler
+
+from modules.oci_generative_ai import OciGenerativeAi
+from modules.session_handler import SessionHandler
 
 _ = load_dotenv()
 compartment_id = os.getenv("COMPARTMENT_ID")
@@ -110,35 +110,9 @@ if prompt := st.chat_input("What's up?"):
         st.session_state.messages.append({"role": "assistant", "content": message})
 
 if session_id:
-    trace_id = langfuse_handler.get_trace_id()
-    feedback = streamlit_feedback(
-        feedback_type=feedback_option,
-        optional_text_label="[オプション] 理由を教えてください。",
-        key=session_id
+    session_handler = SessionHandler(
+        st=st,
+        session_id=session_id,
+        feedback_option=feedback_option
     )
-    score_mappings = {
-        "thumbs": {"👍": 1, "👎": 0},
-        "faces": {"😀": 1, "🙂": 0.75, "😐": 0.5, "🙁": 0.25, "😞": 0},
-    }
-    scores = score_mappings[feedback_option]
-    if feedback:
-        score = scores.get(feedback.get("score"))
-        comment = feedback.get("text")
-        if score is not None:
-            if comment is not None:
-                trace_id = langfuse_handler.get_trace_id()
-                langfuse.score(
-                    trace_id=trace_id,
-                    value=score,
-                    name="user-feedback",
-                    comment=comment
-                )
-            else:
-                trace_id = langfuse_handler.get_trace_id()
-                langfuse.score(
-                    trace_id=trace_id,
-                    value=score,
-                    name="user-feedback",
-                )
-        else:
-            st.warning("Invalid feedback score.")
+    session_handler.handle()
