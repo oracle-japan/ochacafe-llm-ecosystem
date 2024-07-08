@@ -1,3 +1,3 @@
 # OCHaCafe Season8 #6 - LLM のエコシステム
 
-TODO
+Oracle Cloud Hangout Cafe Season8 #6 - LLM のエコシステムで用いたデモコードを格納しています。
