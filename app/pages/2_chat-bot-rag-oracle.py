@@ -77,7 +77,7 @@ with st.sidebar.container():
         frequency_penalty = st.sidebar.slider(label="Frequency Penalty", min_value=0.0, max_value=1.0, value=0.0, step=0.1)
         presence_penalty = st.sidebar.slider(label="Presence Penalty", min_value=0.0, max_value=1.0, value=0.0, step=0.1)
 
-cohere = OciGenerativeAi(
+oci_genai = OciGenerativeAi(
     compartment_id=compartment_id,
     service_endpoint=service_endpoint,
     streaming=streaming,
@@ -106,7 +106,7 @@ if prompt := st.chat_input("What's up?"):
         st.markdown(prompt)
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
-        response = cohere.chat_with_rag(
+        response = oci_genai.chat_with_rag(
             input=prompt,
             streaming=streaming,
         )

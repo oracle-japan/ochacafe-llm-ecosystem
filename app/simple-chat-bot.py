@@ -65,7 +65,7 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-cohere = OciGenerativeAi(
+oci_genai = OciGenerativeAi(
     compartment_id=compartment_id,
     service_endpoint=service_endpoint,
     streaming=streaming,
@@ -85,13 +85,13 @@ if prompt := st.chat_input("What's up?"):
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         if "messages" not in st.session_state:
-            response = cohere.chat(
+            response = oci_genai.chat(
                 input=prompt,
                 streaming=streaming,
             )
         else:
             messages = st.session_state.messages
-            response = cohere.chat(
+            response = oci_genai.chat(
                 input=messages,
                 streaming=streaming,
             )
