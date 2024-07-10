@@ -24,8 +24,8 @@ class OciGenerativeAi:
             is_stream=kwargs.get("streaming"),
             max_tokens=kwargs.get("max_tokens"),
             temperature=kwargs.get("temperature"),
-            top_k=kwargs.get("top_k"),
-            top_p=kwargs.get("top_p"),
+            top_k=kwargs.get("k"),
+            top_p=kwargs.get("p"),
             frequency_penalty=kwargs.get("frequency_penalty"),
             presence_penalty=kwargs.get("presence_penalty"),
 
